@@ -1,0 +1,28 @@
+# Python (backend/, ai/)
+venv/
+__pycache__/
+*.pyc
+*.pyo
+
+# Node (frontend/)
+node_modules/
+dist/
+build/
+
+# Environment variables / secrets — never commit these
+.env
+.env.local
+.env.*.local
+
+# Model files / large artifacts (Whisper, embeddings)
+*.pt
+*.bin
+*.ckpt
+
+# Vector DB local storage
+chroma_db/
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store

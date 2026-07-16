@@ -1,5 +1,14 @@
+import { useParams } from 'react-router-dom'
+
 function MeetingDetailPage() {
-    return <h1 className="text-2xl font-bold p-8">Meeting Detail Page</h1>
+    const { id } = useParams()
+
+    return (
+        <div className="p-8">
+            <h1 className="text-2xl font-bold">Meeting Detail Page</h1>
+            <p className="text-gray-600">Meeting ID: {id}</p>
+        </div>
+    )
 }
 
 export default MeetingDetailPage

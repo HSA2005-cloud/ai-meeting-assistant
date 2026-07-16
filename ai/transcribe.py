@@ -1,10 +1,10 @@
-import time 
 from faster_whisper import WhisperModel
 
-_model = WhisperModel("base", device="cpu", compute_type="int8")
+MODEL_SIZE = "base"
 
-audio_path = "/Users/hanishsadhi/Desktop/Projects/ai-meeting-assistant/ai/GlobalNewsPodcast-20260713-TrialsOfNewEbolaVaccineSetToBegin.mp3"  # your real test file
+_model = WhisperModel(MODEL_SIZE, device="cpu", compute_type="int8")
+
 
 def transcribe(audio_path: str) -> str:
-    segments, info = _model.transcribe(audio_path)
-    return " ".join(segment.text for segment in segments)
+    segments, _info = _model.transcribe(audio_path)
+    return " ".join(segment.text.strip() for segment in segments)

@@ -5,6 +5,7 @@ __pycache__/
 *.pyo
 test_transcribe.py
 transcript.txt
+*.mp3
 
 # Node (frontend/)
 node_modules/

@@ -5,7 +5,7 @@ import subprocess
 from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, BackgroundTasks
 from auth import get_current_user
 from db import supabase
-from stubs.ai_stubs import transcribe_stub
+from transcribe import transcribe
 
 router = APIRouter(prefix="/meetings", tags=["meetings"])
 
@@ -48,7 +48,7 @@ def transcribe_meeting(meeting_id: str, audio_storage_path: str):
         with open(local_audio, "wb") as f:
             f.write(audio_bytes)
 
-        transcript_text = transcribe_stub(local_audio)
+        transcript_text = transcribe(local_audio)
 
         supabase.table("transcripts").insert({
             "meeting_id": meeting_id,

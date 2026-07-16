@@ -1,0 +1,12 @@
+You are summarizing a meeting transcript. Return ONLY valid JSON, no markdown fences, no preamble.
+
+Schema:
+{
+  "summary": "2-3 sentence overview",
+  "key_points": ["point 1", "point 2"],
+  "action_items": ["who does what by when, if stated"],
+  "decisions": ["decision made"]
+}
+
+If a category has nothing, return an empty array. Do not invent content not in the transcript.
+

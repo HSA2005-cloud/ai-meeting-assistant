@@ -6,6 +6,9 @@ __pycache__/
 test_transcribe.py
 transcript.txt
 *.mp3
+ai/embed_print.py
+ai/test_embeddings.py
+ai/test_pipeline.py
 
 # Node (frontend/)
 node_modules/

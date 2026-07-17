@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, Backgro
 from auth import get_current_user
 from db import supabase
 from transcribe import transcribe
+from summarize import summarize
 
 router = APIRouter(prefix="/meetings", tags=["meetings"])
 
@@ -22,9 +23,9 @@ def extract_audio(input_path: str) -> str:
         [
             "ffmpeg", "-y",
             "-i", input_path,
-            "-vn",                    # no video
+            "-vn",
             "-acodec", "libmp3lame",
-            "-b:a", "128k",           # 128kbps keeps audio small
+            "-b:a", "128k",
             audio_path,
         ],
         check=True,
@@ -34,7 +35,7 @@ def extract_audio(input_path: str) -> str:
 
 
 def transcribe_meeting(meeting_id: str, audio_storage_path: str):
-    """Background task: download the (small) audio from Supabase, transcribe, save."""
+    """Background task: download audio, transcribe, summarize, save everything."""
     tmp_dir = tempfile.mkdtemp()
     local_audio = None
     try:
@@ -48,6 +49,7 @@ def transcribe_meeting(meeting_id: str, audio_storage_path: str):
         with open(local_audio, "wb") as f:
             f.write(audio_bytes)
 
+        # 1. Transcribe
         transcript_text = transcribe(local_audio)
 
         supabase.table("transcripts").insert({
@@ -55,15 +57,25 @@ def transcribe_meeting(meeting_id: str, audio_storage_path: str):
             "full_text": transcript_text,
         }).execute()
 
+        # 2. Summarize the transcript (Gemini)
+        summary_data = summarize(transcript_text)
+
+        supabase.table("summaries").insert({
+            "meeting_id": meeting_id,
+            "version": 1,
+            "content": summary_data,
+        }).execute()
+
+        # 3. Mark as completed
         supabase.table("meetings").update(
-            {"status": "done"}
+            {"status": "completed"}
         ).eq("id", meeting_id).execute()
 
     except Exception as e:
         supabase.table("meetings").update(
             {"status": "failed"}
         ).eq("id", meeting_id).execute()
-        print(f"Transcription failed for {meeting_id}: {e}")
+        print(f"Processing failed for {meeting_id}: {e}")
     finally:
         if local_audio and os.path.exists(local_audio):
             os.remove(local_audio)
@@ -84,7 +96,6 @@ async def upload_meeting(
     local_audio = None
 
     try:
-        # 1. Stream the upload to disk in chunks (never load whole file into RAM)
         with open(local_input, "wb") as f:
             while True:
                 chunk = await file.read(CHUNK_SIZE)
@@ -92,7 +103,6 @@ async def upload_meeting(
                     break
                 f.write(chunk)
 
-        # 2. If video, extract audio locally with FFmpeg. Otherwise use as-is.
         if ext in VIDEO_EXTENSIONS:
             local_audio = extract_audio(local_input)
             audio_to_store = local_audio
@@ -101,7 +111,6 @@ async def upload_meeting(
             audio_to_store = local_input
             audio_ext = ext
 
-        # 3. Upload ONLY the (small) audio to Supabase
         audio_storage_path = f"{user_id}/{uuid.uuid4()}_audio{audio_ext}"
         with open(audio_to_store, "rb") as f:
             audio_bytes = f.read()
@@ -111,7 +120,6 @@ async def upload_meeting(
             {"content-type": "audio/mpeg"},
         )
 
-        # 4. Create the meetings row
         result = supabase.table("meetings").insert({
             "user_id": user_id,
             "title": original_name,
@@ -125,14 +133,12 @@ async def upload_meeting(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Upload failed: {e}")
     finally:
-        # Always delete the big local video + temp audio
         for path in (local_input, local_audio):
             if path and os.path.exists(path):
                 os.remove(path)
         if os.path.exists(tmp_dir):
             os.rmdir(tmp_dir)
 
-    # 5. Kick off transcription in the background
     background_tasks.add_task(transcribe_meeting, meeting_id, audio_storage_path)
 
     return {"meeting_id": meeting_id, "status": "uploaded"}
@@ -148,3 +154,49 @@ def list_meetings(user_id: str = Depends(get_current_user)):
         .execute()
     )
     return result.data
+
+
+@router.get("/{meeting_id}")
+def get_meeting(meeting_id: str, user_id: str = Depends(get_current_user)):
+    # 1. Fetch the meeting, scoped to this user (security)
+    meeting_result = (
+        supabase.table("meetings")
+        .select("id, title, status, created_at")
+        .eq("id", meeting_id)
+        .eq("user_id", user_id)
+        .execute()
+    )
+    if not meeting_result.data:
+        raise HTTPException(status_code=404, detail="Meeting not found")
+    meeting = meeting_result.data[0]
+
+    # 2. Fetch the transcript (may not exist yet if still processing)
+    transcript_result = (
+        supabase.table("transcripts")
+        .select("full_text")
+        .eq("meeting_id", meeting_id)
+        .execute()
+    )
+    transcript = transcript_result.data[0]["full_text"] if transcript_result.data else ""
+
+    # 3. Fetch the latest summary (content is the StructuredSummary dict)
+    summary_result = (
+        supabase.table("summaries")
+        .select("content")
+        .eq("meeting_id", meeting_id)
+        .order("version", desc=True)
+        .execute()
+    )
+    empty_summary = {"summary": "", "key_points": [], "action_items": [], "decisions": []}
+    summary_content = summary_result.data[0]["content"] if summary_result.data else empty_summary
+
+    # 4. Shape the response to match frontend's MeetingDetailResponse contract
+    return {
+        "id": meeting["id"],
+        "title": meeting["title"],
+        "status": meeting["status"],
+        "created_at": meeting["created_at"],
+        "transcript": transcript,
+        "summary": summary_content,                     # nested StructuredSummary object
+        "action_items": summary_content.get("action_items", []),
+    }

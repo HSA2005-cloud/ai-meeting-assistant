@@ -3,3 +3,4 @@ venv/
 __pycache__/
 *.pyc
 get_token.py
+chroma_db/

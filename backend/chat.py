@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from auth import get_current_user
 from db import supabase
-from stubs.ai_stubs import answer_question_stub as answer_question
+from answer_question import answer_question
 
 router = APIRouter(prefix="/chat", tags=["chat"])
 
@@ -34,7 +34,7 @@ def chat(meeting_id: str, body: ChatRequest, user_id: str = Depends(get_current_
         "content": body.question,
     }).execute()
 
-    # Get the grounded answer (stub for now — swap to ai's answer_question later)
+    # Grounded answer: retrieve this meeting's chunks from ChromaDB, ask Gemini
     answer = answer_question(meeting_id, body.question)
 
     # Save the assistant's answer

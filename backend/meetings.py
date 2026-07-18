@@ -1,5 +1,6 @@
 import os
 import uuid
+import shutil
 import tempfile
 import subprocess
 import traceback
@@ -21,18 +22,31 @@ CHUNK_SIZE = 1024 * 1024  # 1 MB chunks for streaming
 def extract_audio(input_path: str) -> str:
     """FFmpeg: extract audio from a video into a compact mp3. Returns the mp3 path."""
     audio_path = input_path + ".mp3"
-    subprocess.run(
+    result = subprocess.run(
         [
             "ffmpeg", "-y",
+            # Tolerate corrupt packets (e.g. partially-downloaded recordings)
+            # instead of aborting — extract whatever audio is decodable.
+            "-err_detect", "ignore_err",
+            "-fflags", "+discardcorrupt",
             "-i", input_path,
             "-vn",
             "-acodec", "libmp3lame",
-            "-b:a", "128k",
+            # Mono 16 kHz: what Whisper consumes, and sidesteps unsupported
+            # channel layouts (libmp3lame only handles mono/stereo).
+            "-ac", "1",
+            "-ar", "16000",
+            "-b:a", "64k",
             audio_path,
         ],
-        check=True,
         capture_output=True,
+        text=True,
     )
+    if result.returncode != 0:
+        # Log ffmpeg's full complaint; put the tail in the raised error.
+        print(f"ffmpeg stderr for {input_path}:\n{result.stderr}")
+        stderr_tail = (result.stderr or "").strip()[-2000:]
+        raise RuntimeError(f"ffmpeg exited {result.returncode}: {stderr_tail}")
     return audio_path
 
 
@@ -87,10 +101,7 @@ def transcribe_meeting(meeting_id: str, audio_storage_path: str):
         print(f"Processing failed for {meeting_id}: {e}")
         traceback.print_exc()
     finally:
-        if local_audio and os.path.exists(local_audio):
-            os.remove(local_audio)
-        if os.path.exists(tmp_dir):
-            os.rmdir(tmp_dir)
+        shutil.rmtree(tmp_dir, ignore_errors=True)
 
 
 @router.post("/upload")
@@ -138,16 +149,15 @@ async def upload_meeting(
         }).execute()
         meeting_id = result.data[0]["id"]
 
-    except subprocess.CalledProcessError as e:
+    except RuntimeError as e:
+        print(f"Audio extraction failed: {e}")
         raise HTTPException(status_code=500, detail=f"Audio extraction failed: {e}")
     except Exception as e:
+        print(f"Upload failed: {e}")
         raise HTTPException(status_code=500, detail=f"Upload failed: {e}")
     finally:
-        for path in (local_input, local_audio):
-            if path and os.path.exists(path):
-                os.remove(path)
-        if os.path.exists(tmp_dir):
-            os.rmdir(tmp_dir)
+        # ignore_errors so cleanup never masks the real exception
+        shutil.rmtree(tmp_dir, ignore_errors=True)
 
     background_tasks.add_task(transcribe_meeting, meeting_id, audio_storage_path)
 

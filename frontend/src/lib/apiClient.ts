@@ -2,7 +2,7 @@ import { supabase } from "./supabaseClient";
 const BASE = import.meta.env.VITE_API_URL;
 
 export async function apiFetch(path: string, options: RequestInit = {}) {
-    const { data } = (await supabase?.auth.getSession()) ?? { data: { session: null } };
+    const { data } = await supabase.auth.getSession();
     const token = data.session?.access_token;
 
     const res = await fetch(`${BASE}${path}`, {

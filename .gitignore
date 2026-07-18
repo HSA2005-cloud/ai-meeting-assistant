@@ -9,6 +9,7 @@ transcript.txt
 ai/embed_print.py
 ai/test_embeddings.py
 ai/test_pipeline.py
+ai/test_answer.py
 
 # Node (frontend/)
 node_modules/

@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
+import { FolderOpen, UploadCloud } from 'lucide-react'
 import type { MeetingListItem } from '../types/contracts'
 import { fetchMeetings } from '../mocks/dashboardMock'
 import { MeetingCard } from '../components/dashboard/MeetingCard'
@@ -13,6 +15,16 @@ export function DashboardPage() {
   const [error, setError] = useState<string | null>(null)
   const [showUpload, setShowUpload] = useState(false)
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const [searchParams, setSearchParams] = useSearchParams()
+
+  // Lets the sidebar's "Upload Recording" nav item (a link to /?upload=1) open
+  // this page's existing upload modal without lifting any state or routes.
+  useEffect(() => {
+    if (searchParams.get('upload') === '1') {
+      setShowUpload(true)
+      setSearchParams({}, { replace: true })
+    }
+  }, [searchParams, setSearchParams])
 
   const load = useCallback(async () => {
     try {
@@ -42,35 +54,42 @@ export function DashboardPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-xl font-semibold text-slate-900">Your meetings</h1>
-          <p className="mt-1 text-sm text-slate-500">Upload a recording to get a transcript, summary, and chatbot.</p>
+          <h1 className="text-3xl font-bold tracking-tight text-[#111827]">Your Meetings</h1>
+          <p className="mt-2 text-sm text-[#6B7280]">Upload a recording to get transcripts, summaries and AI chat.</p>
         </div>
-        <Button onClick={() => setShowUpload(true)}>Upload recording</Button>
+        <Button onClick={() => setShowUpload(true)} icon={<UploadCloud size={18} strokeWidth={1.8} />}>
+          Upload Recording
+        </Button>
       </div>
 
-      <div className="mt-6">
+      <div className="mt-10">
         {error && <ErrorState message={error} onRetry={load} />}
 
         {!error && meetings === null && (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {Array.from({ length: 3 }).map((_, i) => (
-              <Skeleton key={i} className="h-28" />
+              <Skeleton key={i} className="h-32" />
             ))}
           </div>
         )}
 
         {!error && meetings?.length === 0 && (
           <EmptyState
+            icon={<FolderOpen size={28} strokeWidth={1.8} />}
             title="No meetings yet"
-            description="Upload your first recording — we'll transcribe it and generate a summary within a few minutes."
-            action={<Button onClick={() => setShowUpload(true)}>Upload recording</Button>}
+            description="Upload your first recording and we'll automatically generate transcripts, summaries, action items and an AI chatbot within minutes."
+            action={
+              <Button onClick={() => setShowUpload(true)} icon={<UploadCloud size={18} strokeWidth={1.8} />}>
+                Upload Recording
+              </Button>
+            }
           />
         )}
 
         {!error && meetings && meetings.length > 0 && (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {meetings.map((meeting) => (
               <MeetingCard key={meeting.id} meeting={meeting} />
             ))}

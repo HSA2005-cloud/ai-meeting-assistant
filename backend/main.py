@@ -1,10 +1,12 @@
 from fastapi import FastAPI, Depends
 from auth import get_current_user
 from meetings import router as meetings_router
+from chat import router as chat_router
 
 app = FastAPI()
 
 app.include_router(meetings_router)
+app.include_router(chat_router)
 
 @app.get("/health")
 def health():

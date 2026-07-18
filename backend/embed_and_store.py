@@ -38,3 +38,8 @@ def embed_and_store(meeting_id: str, transcript_text: str) -> None:
         documents=chunks,
         metadatas=metadatas,
     )
+
+
+def delete_embeddings(meeting_id: str) -> None:
+    """Remove all embedded chunks for a meeting (used on delete/retry)."""
+    _collection.delete(where={"meeting_id": meeting_id})

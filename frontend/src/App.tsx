@@ -3,18 +3,31 @@ import { AuthProvider } from './context/AuthContext'
 import { ProtectedRoute } from './components/layout/ProtectedRoute'
 import { LoginPage } from './pages/LoginPage'
 import { SignupPage } from './pages/SignupPage'
+import { HomePage } from './pages/HomePage'
 import { DashboardPage } from './pages/DashboardPage'
 import { MeetingDetailPage } from './pages/MeetingDetailPage'
+import { AnalyticsPage } from './pages/AnalyticsPage'
+import { SettingsPage } from './pages/SettingsPage'
+import { ExtensionRecordingBridge } from './components/ExtensionRecordingBridge'
 
 function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
+        <ExtensionRecordingBridge />
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
           <Route
             path="/"
+            element={
+              <ProtectedRoute>
+                <HomePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/meetings"
             element={
               <ProtectedRoute>
                 <DashboardPage />
@@ -26,6 +39,22 @@ function App() {
             element={
               <ProtectedRoute>
                 <MeetingDetailPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/analytics"
+            element={
+              <ProtectedRoute>
+                <AnalyticsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/settings"
+            element={
+              <ProtectedRoute>
+                <SettingsPage />
               </ProtectedRoute>
             }
           />

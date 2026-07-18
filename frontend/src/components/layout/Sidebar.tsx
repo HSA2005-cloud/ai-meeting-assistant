@@ -5,10 +5,10 @@ import {
   BarChart3,
   ChevronDown,
   CircleHelp,
+  Home,
   LayoutGrid,
   LogOut,
   Settings,
-  UploadCloud,
   X,
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
@@ -21,10 +21,10 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  { label: 'Meetings', icon: LayoutGrid, to: '/' },
-  { label: 'Upload Recording', icon: UploadCloud, to: '/?upload=1' },
-  { label: 'Analytics', icon: BarChart3 },
-  { label: 'Settings', icon: Settings },
+  { label: 'Home', icon: Home, to: '/' },
+  { label: 'Meetings', icon: LayoutGrid, to: '/meetings' },
+  { label: 'Analytics', icon: BarChart3, to: '/analytics' },
+  { label: 'Settings', icon: Settings, to: '/settings' },
 ]
 
 export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
@@ -112,8 +112,11 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
 
         <nav className="relative flex-1 space-y-1 px-4" aria-label="Main navigation">
           {navItems.map((item) => {
-            const isActive =
-              item.label === 'Meetings' && (location.pathname === '/' || location.pathname.startsWith('/meetings/'))
+            const isActive = item.to
+              ? item.to === '/'
+                ? location.pathname === '/'
+                : location.pathname.startsWith(item.to)
+              : false
             const Icon = item.icon
 
             if (!item.to) {

@@ -7,6 +7,7 @@ const config: Record<MeetingStatus, { label: string; classes: string; showSpinne
   processing: { label: 'Processing', classes: 'bg-amber-100 text-amber-700', showSpinner: true },
   completed: { label: 'Ready', classes: 'bg-emerald-50 text-emerald-800' },
   failed: { label: 'Failed', classes: 'bg-red-100 text-red-700' },
+  quota_exceeded: { label: 'Token Limit Reached', classes: 'bg-orange-100 text-orange-700' },
 }
 
 export function StatusBadge({ status }: { status: MeetingStatus }) {

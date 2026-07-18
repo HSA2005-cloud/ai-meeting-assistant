@@ -1,21 +1,26 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useLocation, useParams } from 'react-router-dom'
+import { AlertTriangle, Info } from 'lucide-react'
 import type { MeetingDetailResponse } from '../types/contracts'
 import { fetchMeetingDetail } from '../mocks/meetingDetailMock'
 import { SummaryPanel } from '../components/meeting/SummaryPanel'
 import { TranscriptPanel } from '../components/meeting/TranscriptPanel'
+import { ProcessingSteps } from '../components/meeting/ProcessingSteps'
 import { ChatWidget } from '../components/chat/ChatWidget'
 import { StatusBadge } from '../components/ui/StatusBadge'
 import { Skeleton } from '../components/ui/Skeleton'
 import { ErrorState } from '../components/ui/ErrorState'
-import { Spinner } from '../components/ui/Spinner'
 import { formatRelativeTime } from '../lib/utils'
 
 export function MeetingDetailPage() {
   const { id } = useParams<{ id: string }>()
+  const location = useLocation()
   const [meeting, setMeeting] = useState<MeetingDetailResponse | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [tab, setTab] = useState<'summary' | 'transcript'>('summary')
+  const [showDuplicateNotice, setShowDuplicateNotice] = useState(
+    (location.state as { duplicate?: boolean } | null)?.duplicate === true,
+  )
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const load = useCallback(() => {
@@ -53,10 +58,11 @@ export function MeetingDetailPage() {
   }
 
   const isProcessing = meeting.status === 'uploaded' || meeting.status === 'processing'
+  const isQuotaExceeded = meeting.status === 'quota_exceeded'
 
   return (
     <div>
-      <Link to="/" className="text-sm text-slate-500 hover:text-slate-700">
+      <Link to="/meetings" className="text-sm text-slate-500 hover:text-slate-700">
         ← Back to meetings
       </Link>
 
@@ -66,16 +72,38 @@ export function MeetingDetailPage() {
       </div>
       <p className="mt-1 text-sm text-slate-400">{formatRelativeTime(meeting.created_at)}</p>
 
-      {isProcessing ? (
-        <div className="mt-8 flex flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 bg-white px-6 py-16 text-center">
-          <Spinner className="h-8 w-8 text-indigo-500" />
-          <h3 className="mt-4 text-base font-semibold text-slate-900">
-            {meeting.status === 'uploaded' ? 'Getting ready to process…' : 'Transcribing and summarizing…'}
-          </h3>
-          <p className="mt-1.5 max-w-sm text-sm text-slate-500">
-            This usually takes a few minutes for a typical recording. This page updates automatically.
-          </p>
+      {showDuplicateNotice && (
+        <div className="mt-6 flex items-start gap-3 rounded-xl border border-indigo-200 bg-indigo-50 px-5 py-4">
+          <Info size={20} className="mt-0.5 shrink-0 text-indigo-500" />
+          <div className="flex-1">
+            <h3 className="text-sm font-semibold text-indigo-800">This recording already exists</h3>
+            <p className="mt-0.5 text-sm text-indigo-700">
+              You've uploaded this file before, so we skipped re-processing it. Here's the existing summary.
+            </p>
+          </div>
+          <button
+            onClick={() => setShowDuplicateNotice(false)}
+            className="text-sm font-medium text-indigo-500 hover:text-indigo-700"
+          >
+            Dismiss
+          </button>
         </div>
+      )}
+
+      {isQuotaExceeded && (
+        <div className="mt-6 flex items-start gap-3 rounded-xl border border-orange-200 bg-orange-50 px-5 py-4">
+          <AlertTriangle size={20} className="mt-0.5 shrink-0 text-orange-500" />
+          <div>
+            <h3 className="text-sm font-semibold text-orange-800">Token limit reached</h3>
+            <p className="mt-0.5 text-sm text-orange-700">
+              The summary could not be generated due to API rate limits. Your transcript is still available below.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {isProcessing ? (
+        <ProcessingSteps stage={meeting.stage} preparing={meeting.status === 'uploaded'} />
       ) : (
         <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
           <div className="lg:col-span-2">

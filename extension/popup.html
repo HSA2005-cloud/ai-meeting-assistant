@@ -1,0 +1,51 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      :root { color-scheme: light dark; }
+      body {
+        width: 260px;
+        margin: 0;
+        padding: 16px;
+        font-family: -apple-system, system-ui, sans-serif;
+        background: #ffffff;
+        color: #111827;
+      }
+      h1 { font-size: 14px; margin: 0 0 2px; }
+      p.sub { font-size: 11px; color: #6b7280; margin: 0 0 14px; }
+      #timer {
+        font-variant-numeric: tabular-nums;
+        font-size: 28px;
+        font-weight: 600;
+        text-align: center;
+        margin: 6px 0 14px;
+        letter-spacing: 0.02em;
+      }
+      button {
+        width: 100%;
+        border: 0;
+        border-radius: 10px;
+        padding: 10px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      #start { background: #4f46e5; color: #fff; }
+      #stop { background: #dc2626; color: #fff; }
+      button:disabled { opacity: 0.5; cursor: default; }
+      #status { font-size: 11px; color: #6b7280; text-align: center; margin-top: 10px; min-height: 14px; }
+      .dot { display:inline-block; width:8px; height:8px; border-radius:50%; background:#dc2626; margin-right:6px; animation: pulse 1.2s infinite; }
+      @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+    </style>
+  </head>
+  <body>
+    <h1>Meeting Recorder</h1>
+    <p class="sub">Records this tab's audio + your mic.</p>
+    <div id="timer">00:00</div>
+    <button id="start">● Start recording</button>
+    <button id="stop" style="display:none">■ Stop &amp; summarize</button>
+    <div id="status"></div>
+    <script src="popup.js"></script>
+  </body>
+</html>

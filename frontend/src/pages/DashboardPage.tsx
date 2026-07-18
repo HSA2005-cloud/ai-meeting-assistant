@@ -1,30 +1,19 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
-import { FolderOpen, UploadCloud } from 'lucide-react'
+import { FolderOpen } from 'lucide-react'
 import type { MeetingListItem } from '../types/contracts'
 import { fetchMeetings } from '../mocks/dashboardMock'
 import { MeetingCard } from '../components/dashboard/MeetingCard'
-import { UploadModal } from '../components/upload/UploadModal'
-import { Button } from '../components/ui/Button'
 import { Skeleton } from '../components/ui/Skeleton'
 import { EmptyState } from '../components/ui/EmptyState'
 import { ErrorState } from '../components/ui/ErrorState'
+import { Button } from '../components/ui/Button'
+import { useNavigate } from 'react-router-dom'
 
 export function DashboardPage() {
   const [meetings, setMeetings] = useState<MeetingListItem[] | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const [showUpload, setShowUpload] = useState(false)
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
-  const [searchParams, setSearchParams] = useSearchParams()
-
-  // Lets the sidebar's "Upload Recording" nav item (a link to /?upload=1) open
-  // this page's existing upload modal without lifting any state or routes.
-  useEffect(() => {
-    if (searchParams.get('upload') === '1') {
-      setShowUpload(true)
-      setSearchParams({}, { replace: true })
-    }
-  }, [searchParams, setSearchParams])
+  const navigate = useNavigate()
 
   const load = useCallback(async () => {
     try {
@@ -56,12 +45,9 @@ export function DashboardPage() {
     <div>
       <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-[#111827]">Your Meetings</h1>
-          <p className="mt-2 text-sm text-[#6B7280]">Upload a recording to get transcripts, summaries and AI chat.</p>
+          <h1 className="text-3xl font-bold tracking-tight text-[#111827]">Meeting History</h1>
+          <p className="mt-2 text-sm text-[#6B7280]">View transcripts, summaries and chat with your past meetings.</p>
         </div>
-        <Button onClick={() => setShowUpload(true)} icon={<UploadCloud size={18} strokeWidth={1.8} />}>
-          Upload Recording
-        </Button>
       </div>
 
       <div className="mt-10">
@@ -79,10 +65,10 @@ export function DashboardPage() {
           <EmptyState
             icon={<FolderOpen size={28} strokeWidth={1.8} />}
             title="No meetings yet"
-            description="Upload your first recording and we'll automatically generate transcripts, summaries, action items and an AI chatbot within minutes."
+            description="Upload your first recording from the Home page and we'll automatically generate transcripts, summaries, action items and an AI chatbot within minutes."
             action={
-              <Button onClick={() => setShowUpload(true)} icon={<UploadCloud size={18} strokeWidth={1.8} />}>
-                Upload Recording
+              <Button onClick={() => navigate('/')}>
+                Go to Home
               </Button>
             }
           />
@@ -96,16 +82,6 @@ export function DashboardPage() {
           </div>
         )}
       </div>
-
-      {showUpload && (
-        <UploadModal
-          onClose={() => setShowUpload(false)}
-          onUploaded={() => {
-            setShowUpload(false)
-            load()
-          }}
-        />
-      )}
     </div>
   )
 }

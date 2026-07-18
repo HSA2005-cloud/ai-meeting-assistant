@@ -1,3 +1,5 @@
+import os
+
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from auth import get_current_user
@@ -6,9 +8,16 @@ from chat import router as chat_router
 
 app = FastAPI()
 
+# Local dev origins are always allowed. Set FRONTEND_ORIGIN in production to your
+# deployed frontend URL (comma-separated for multiple, e.g. prod + preview).
+_origins = ["http://localhost:5173", "http://127.0.0.1:5173"]
+_frontend_origin = os.getenv("FRONTEND_ORIGIN")
+if _frontend_origin:
+    _origins.extend(o.strip() for o in _frontend_origin.split(",") if o.strip())
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_origins=_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

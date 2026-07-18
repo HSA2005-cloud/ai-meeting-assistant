@@ -23,12 +23,30 @@ VIDEO_EXTENSIONS = {".mp4", ".mov", ".mkv", ".avi", ".webm", ".flv"}
 CHUNK_SIZE = 1024 * 1024  # 1 MB chunks for streaming
 
 
+def _resolve_ffmpeg() -> str:
+    """Path to an ffmpeg binary.
+
+    Prefer the one bundled by the `imageio-ffmpeg` pip package so hosts without a
+    system ffmpeg (e.g. Render's native Python runtime) can still extract audio.
+    Fall back to a `ffmpeg` on PATH for local dev.
+    """
+    try:
+        import imageio_ffmpeg
+
+        return imageio_ffmpeg.get_ffmpeg_exe()
+    except Exception:
+        return "ffmpeg"
+
+
+FFMPEG = _resolve_ffmpeg()
+
+
 def extract_audio(input_path: str) -> str:
     """FFmpeg: extract audio from a video into a compact mp3. Returns the mp3 path."""
     audio_path = input_path + ".mp3"
     result = subprocess.run(
         [
-            "ffmpeg", "-y",
+            FFMPEG, "-y",
             # Tolerate corrupt packets (e.g. partially-downloaded recordings)
             # instead of aborting — extract whatever audio is decodable.
             "-err_detect", "ignore_err",

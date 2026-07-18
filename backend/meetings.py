@@ -2,11 +2,13 @@ import os
 import uuid
 import tempfile
 import subprocess
+import traceback
 from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, BackgroundTasks
 from auth import get_current_user
 from db import supabase
 from transcribe import transcribe
 from summarize import summarize
+from embed_and_store import embed_and_store
 
 router = APIRouter(prefix="/meetings", tags=["meetings"])
 
@@ -51,13 +53,19 @@ def transcribe_meeting(meeting_id: str, audio_storage_path: str):
 
         # 1. Transcribe
         transcript_text = transcribe(local_audio)
+        print(f">>> TRANSCRIBE DONE for {meeting_id} chars: {len(transcript_text)}")
 
         supabase.table("transcripts").insert({
             "meeting_id": meeting_id,
             "full_text": transcript_text,
         }).execute()
 
-        # 2. Summarize the transcript (Gemini)
+        # 2. Embed transcript chunks into ChromaDB for the chat endpoint
+        print(f">>> ABOUT TO EMBED {meeting_id}")
+        embed_and_store(meeting_id, transcript_text)
+        print(f">>> EMBED FINISHED {meeting_id}")
+
+        # 3. Summarize the transcript (Gemini)
         summary_data = summarize(transcript_text)
 
         supabase.table("summaries").insert({
@@ -66,16 +74,18 @@ def transcribe_meeting(meeting_id: str, audio_storage_path: str):
             "content": summary_data,
         }).execute()
 
-        # 3. Mark as completed
+        # 4. Mark as completed
         supabase.table("meetings").update(
             {"status": "completed"}
         ).eq("id", meeting_id).execute()
+        print(f">>> ALL DONE {meeting_id} completed")
 
     except Exception as e:
         supabase.table("meetings").update(
             {"status": "failed"}
         ).eq("id", meeting_id).execute()
         print(f"Processing failed for {meeting_id}: {e}")
+        traceback.print_exc()
     finally:
         if local_audio and os.path.exists(local_audio):
             os.remove(local_audio)

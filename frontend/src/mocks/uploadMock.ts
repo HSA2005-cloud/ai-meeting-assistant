@@ -1,32 +1,42 @@
 import type { UploadMeetingResponse } from '../types/contracts'
-import { createMeeting } from './store'
+import { supabase } from '../lib/supabaseClient'
+
+const BASE = import.meta.env.VITE_API_URL
 
 /**
- * Stands in for POST /meetings/upload -> {meeting_id, status}.
- * Swap-in point: Checkpoint 1 (Section 7) — replace this call with a real
- * multipart upload to the backend once backend/upload-endpoint lands.
+ * POST /meetings/upload -> {meeting_id, status}
+ * Swapped to the real backend (Checkpoint 1, Section 7).
  *
- * onProgress reports fake upload progress (0-100) so the UI's progress bar
- * has something real to bind to before the real endpoint exists.
+ * Uses XMLHttpRequest instead of fetch so onProgress can report real upload
+ * progress (0-100) for the UI's progress bar.
  */
-export function uploadMeeting(
+export async function uploadMeeting(
   file: File,
   onProgress?: (percent: number) => void,
 ): Promise<UploadMeetingResponse> {
-  return new Promise((resolve) => {
-    let percent = 0
-    const tick = () => {
-      percent = Math.min(100, percent + Math.random() * 22 + 8)
-      onProgress?.(Math.round(percent))
-      if (percent < 100) {
-        setTimeout(tick, 180)
+  const { data } = (await supabase?.auth.getSession()) ?? { data: { session: null } }
+  const token = data.session?.access_token
+
+  const form = new FormData()
+  form.append('file', file)
+
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest()
+    xhr.open('POST', `${BASE}/meetings/upload`)
+    if (token) xhr.setRequestHeader('Authorization', `Bearer ${token}`)
+
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable) onProgress?.(Math.round((e.loaded / e.total) * 100))
+    }
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        resolve(JSON.parse(xhr.responseText) as UploadMeetingResponse)
       } else {
-        const title = file.name.replace(/\.[^/.]+$/, '')
-        const meeting = createMeeting(title)
-        resolve({ meeting_id: meeting.id, status: meeting.status })
+        reject(new Error(`${xhr.status}: ${xhr.responseText}`))
       }
     }
-    tick()
+    xhr.onerror = () => reject(new Error('Network error during upload'))
+    xhr.send(form)
   })
 }
 

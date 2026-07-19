@@ -170,7 +170,7 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
           )}
 
           <a
-            href="mailto:support@aimeetingassistant.app"
+            href="mailto:adithyapatil16@gmail.com"
             className="flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium text-white/70 transition-colors duration-200 hover:bg-white/5 hover:text-white"
           >
             <CircleHelp size={22} strokeWidth={1.8} />

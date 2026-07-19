@@ -5,7 +5,7 @@ import { MessageBubble } from './MessageBubble'
 import { Button } from '../ui/Button'
 import { Spinner } from '../ui/Spinner'
 
-export function ChatWidget({ meetingId, disabled }: { meetingId: string; disabled?: boolean }) {
+export function ChatWidget({ meetingId, disabled, onDataUpdated }: { meetingId: string; disabled?: boolean; onDataUpdated?: () => void }) {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [input, setInput] = useState('')
   const [sending, setSending] = useState(false)
@@ -30,12 +30,17 @@ export function ChatWidget({ meetingId, disabled }: { meetingId: string; disable
     setInput('')
     setSending(true)
     try {
-      const { answer } = await sendChatMessage(meetingId, question)
+      const { answer, updated } = await sendChatMessage(meetingId, question)
       setMessages((prev) => [
         ...prev,
         { id: `local-user-${Date.now()}`, role: 'user', content: question, created_at: new Date().toISOString() },
         { id: `local-assistant-${Date.now()}`, role: 'assistant', content: answer, created_at: new Date().toISOString() },
       ])
+      // If the backend modified the transcript/summary (e.g. name correction),
+      // notify the parent page so it can re-fetch the updated data.
+      if (updated && onDataUpdated) {
+        onDataUpdated()
+      }
     } finally {
       setSending(false)
     }

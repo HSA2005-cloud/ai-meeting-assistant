@@ -1,6 +1,6 @@
 import { useRef, useState, type DragEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { AudioLines, UploadCloud, Mic, FileText, MessageSquare, Radio, CheckCircle2, ChevronDown } from 'lucide-react'
+import { AudioLines, UploadCloud, Mic, FileText, MessageSquare, Puzzle, Radio, CheckCircle2, ChevronDown } from 'lucide-react'
 import { isAcceptedFile, uploadMeeting } from '../mocks/uploadMock'
 import { formatBytes } from '../lib/utils'
 import { useExtensionPresence } from '../lib/useExtensionPresence'
@@ -155,7 +155,13 @@ export function HomePage() {
               {extensionReady ? (
                 <p className="mt-3 text-sm text-slate-600">
                   You're all set. Click on the extension icon{' '}
-                  <span className="inline-flex items-center justify-center rounded bg-slate-200 px-1 py-0.5 align-middle text-xs" title="Extensions">🧩</span>{' '}
+                  <span
+                    className="inline-flex h-5 w-5 items-center justify-center rounded bg-slate-600 align-text-bottom"
+                    title="Extensions"
+                    aria-label="Extensions icon"
+                  >
+                    <Puzzle size={13} strokeWidth={2} className="text-white" />
+                  </span>{' '}
                   on the top right corner, click the{' '}
                   <span className="font-medium text-slate-900">Meeting Recorder</span> icon and hit{' '}
                   <span className="font-medium text-slate-900">Start recording</span>.

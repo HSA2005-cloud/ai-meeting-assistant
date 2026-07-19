@@ -78,7 +78,8 @@ export interface ChatMessage {
   created_at: string
 }
 
-// POST /chat/:meeting_id -> {answer}
+// POST /chat/:meeting_id -> {answer, updated?}
 export interface ChatAnswerResponse {
   answer: string
+  updated?: boolean
 }

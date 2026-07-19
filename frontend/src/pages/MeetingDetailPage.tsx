@@ -261,7 +261,7 @@ export function MeetingDetailPage() {
           </div>
 
           <div className="lg:col-span-1">
-            <ChatWidget meetingId={meeting.id} disabled={isProcessing} />
+            <ChatWidget meetingId={meeting.id} disabled={isProcessing} onDataUpdated={load} />
           </div>
         </div>
       )}

@@ -98,7 +98,7 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
             <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/10 text-emerald-200">
               <AudioLines size={20} strokeWidth={1.8} />
             </span>
-            <span className="text-[15px] font-semibold text-white">AI Meeting Assistant</span>
+            <span className="text-[15px] font-semibold text-white">NotePilot</span>
           </div>
           <button
             type="button"

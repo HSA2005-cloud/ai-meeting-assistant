@@ -58,7 +58,7 @@ export function HomePage() {
           <AudioLines size={32} strokeWidth={1.6} className="text-emerald-700" />
         </div>
         <h1 className="text-3xl font-bold tracking-tight text-[#111827] sm:text-4xl">
-          AI Meeting Assistant
+          NotePilot
         </h1>
         <p className="mx-auto mt-3 max-w-lg text-base text-[#6B7280]">
           Upload a recording and get transcripts, summaries, action items, and an AI chatbot — all in minutes.

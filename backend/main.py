@@ -10,7 +10,14 @@ app = FastAPI()
 
 # Local dev origins are always allowed. Set FRONTEND_ORIGIN in production to your
 # deployed frontend URL (comma-separated for multiple, e.g. prod + preview).
-_origins = ["http://localhost:5173", "http://127.0.0.1:5173"]
+_origins = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://localhost:5174",
+    "http://127.0.0.1:5174",
+    "http://localhost:5175",
+    "http://127.0.0.1:5175",
+]
 _frontend_origin = os.getenv("FRONTEND_ORIGIN")
 if _frontend_origin:
     _origins.extend(o.strip() for o in _frontend_origin.split(",") if o.strip())

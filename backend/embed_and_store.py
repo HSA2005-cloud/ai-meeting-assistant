@@ -20,7 +20,9 @@ _BATCH = 100  # max texts per embed_content call
 
 # Consistent absolute path so pipeline (embed) and chat endpoint (query)
 # always use the SAME ChromaDB, regardless of working directory.
-_CHROMA_PATH = os.path.join(os.path.dirname(__file__), "chroma_db")
+# On Railway/Render, set CHROMA_DB_PATH to a mounted volume path so data
+# persists across redeploys. Falls back to a local directory for dev.
+_CHROMA_PATH = os.environ.get("CHROMA_DB_PATH") or os.path.join(os.path.dirname(__file__), "chroma_db")
 
 # NB: new collection name. The previous embedder (all-MiniLM, 384-dim) produced
 # incompatible vectors, and a Chroma collection is locked to the dimensionality

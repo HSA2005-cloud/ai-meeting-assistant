@@ -35,7 +35,7 @@ export function ProtectedRoute({ children }: { children: ReactNode }) {
           >
             <Menu size={22} strokeWidth={1.8} />
           </button>
-          <span className="text-sm font-semibold text-slate-900">AI Meeting Assistant</span>
+          <span className="text-sm font-semibold text-slate-900">NotePilot</span>
         </div>
 
         <main className="mx-auto max-w-[1300px] px-6 py-10 sm:px-10 lg:px-12 lg:py-12">{children}</main>

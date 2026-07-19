@@ -14,11 +14,12 @@ MODEL_NAME = "gemini-3.1-flash-lite"
 TOP_K = 5
 NOT_COVERED = "That wasn't covered in this meeting."
 
-_PROMPT_TEMPLATE = """You are answering questions about a single meeting, using only the transcript excerpts provided below.
+_PROMPT_TEMPLATE = """You are a helpful assistant for a meeting transcript. Use the transcript excerpts provided below to answer the user's question or request.
 
 Rules:
 - Answer ONLY from the excerpts. Do not use outside knowledge.
-- If the excerpts do not contain the answer, say exactly: "That wasn't covered in this meeting."
+- If the user asks a factual question and the excerpts do not contain the answer, say exactly: "That wasn't covered in this meeting."
+- If the user asks you to correct, clarify, or identify a name or term (e.g. "change X to Y", "who is X", "the name should be Y"), look through the excerpts for the relevant mention and provide a helpful response acknowledging the correction or clarifying the name as it appears in the transcript.
 - Do not guess, infer beyond what is stated, or fill gaps with plausible-sounding detail.
 - Answer in 1-3 sentences, plainly. No preamble.
 
@@ -33,7 +34,11 @@ def _retrieve(meeting_id: str, question: str) -> list[str]:
         where={"meeting_id": meeting_id},
     )
     documents = result.get("documents") or [[]]
-    return documents[0]
+    chunks = documents[0]
+    print(f">>> RETRIEVE for {meeting_id}: query={question!r}, chunks_found={len(chunks)}")
+    if chunks:
+        print(f"    first chunk preview: {chunks[0][:120]}...")
+    return chunks
 
 
 def answer_question(meeting_id: str, question: str) -> str:

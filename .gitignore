@@ -5,7 +5,6 @@ __pycache__/
 *.pyo
 test_transcribe.py
 transcript.txt
-*.mp3
 ai/embed_print.py
 ai/test_embeddings.py
 ai/test_pipeline.py

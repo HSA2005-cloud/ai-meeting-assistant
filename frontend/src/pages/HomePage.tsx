@@ -154,8 +154,10 @@ export function HomePage() {
 
               {extensionReady ? (
                 <p className="mt-3 text-sm text-slate-600">
-                  You're all set. Open your meeting tab, click the{' '}
-                  <span className="font-medium text-slate-900">Meeting Recorder</span> icon, and hit{' '}
+                  You're all set. Click on the extension icon{' '}
+                  <span className="inline-flex items-center justify-center rounded bg-slate-200 px-1 py-0.5 align-middle text-xs" title="Extensions">🧩</span>{' '}
+                  on the top right corner, click the{' '}
+                  <span className="font-medium text-slate-900">Meeting Recorder</span> icon and hit{' '}
                   <span className="font-medium text-slate-900">Start recording</span>.
                 </p>
               ) : (

@@ -1,0 +1,47 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Microphone access — Meeting Recorder</title>
+    <style>
+      :root { color-scheme: light dark; }
+      body {
+        font-family: -apple-system, system-ui, sans-serif;
+        max-width: 440px;
+        margin: 12vh auto;
+        padding: 0 20px;
+        color: #111827;
+        line-height: 1.5;
+      }
+      @media (prefers-color-scheme: dark) { body { color: #e5e7eb; } }
+      h1 { font-size: 18px; margin: 0 0 8px; }
+      p { font-size: 14px; color: #6b7280; }
+      #state {
+        margin-top: 18px;
+        padding: 12px 14px;
+        border-radius: 10px;
+        font-size: 14px;
+        font-weight: 600;
+      }
+      .pending { background: #eef2ff; color: #4338ca; }
+      .ok { background: #ecfdf5; color: #047857; }
+      .err { background: #fef2f2; color: #b91c1c; }
+      button {
+        margin-top: 14px; border: 0; border-radius: 10px;
+        padding: 10px 16px; font-size: 14px; font-weight: 600;
+        background: #4f46e5; color: #fff; cursor: pointer;
+      }
+      code { background: rgba(127,127,127,.15); padding: 1px 5px; border-radius: 4px; }
+    </style>
+  </head>
+  <body>
+    <h1>🎙️ Allow microphone for Meeting Recorder</h1>
+    <p>
+      This one-time grant lets the recorder capture <strong>your voice</strong>
+      alongside the meeting tab's audio. Click <em>Allow</em> in Chrome's prompt.
+    </p>
+    <div id="state" class="pending">Requesting microphone access…</div>
+    <button id="retry" style="display:none">Try again</button>
+    <script src="mic-permission.js"></script>
+  </body>
+</html>

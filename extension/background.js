@@ -34,11 +34,31 @@ async function setState(patch) {
   await chrome.storage.session.set({ rec: { ...cur, ...patch } })
 }
 
+// --- toolbar badge (visible even when the popup is closed) -----------------
+
+function setBadge(recording) {
+  chrome.action.setBadgeText({ text: recording ? 'REC' : '' })
+  chrome.action.setBadgeBackgroundColor({ color: '#dc2626' })
+  chrome.action.setTitle({ title: recording ? 'Meeting Recorder — recording…' : 'Meeting Recorder' })
+}
+
+// The service worker can be torn down and restarted mid-recording; restore the
+// badge from persisted state when it wakes back up.
+chrome.storage.session.get('rec').then(({ rec }) => setBadge(!!rec?.recording))
+
 // --- start / stop ----------------------------------------------------------
 
 async function startRecording() {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
   if (!tab) throw new Error('No active tab to record.')
+
+  // Works on any normal website tab (Meet, Zoom web, Teams web, …) via the
+  // activeTab permission — not just one site. Chrome does forbid capturing its
+  // own pages, so give a clear message instead of a cryptic failure.
+  const url = tab.url || ''
+  if (/^(chrome|edge|about|chrome-extension|devtools):/i.test(url) || /^https:\/\/chromewebstore\.google\.com/i.test(url)) {
+    throw new Error('This browser page can’t be recorded. Switch to the meeting tab and try again.')
+  }
 
   // A stream id the offscreen document can hand to getUserMedia to grab THIS
   // tab's audio. Must be obtained from a user gesture (the popup click).
@@ -47,12 +67,14 @@ async function startRecording() {
   await ensureOffscreen()
   await chrome.runtime.sendMessage({ target: 'offscreen', type: 'start-recording', streamId })
 
-  await setState({ recording: true, startedAt: Date.now(), tabTitle: tab.title })
+  await setState({ recording: true, startedAt: Date.now(), tabTitle: tab.title, error: null })
+  setBadge(true)
 }
 
 async function stopRecording() {
   await chrome.runtime.sendMessage({ target: 'offscreen', type: 'stop-recording' })
   await setState({ recording: false })
+  setBadge(false)
 }
 
 // --- hand the finished recording to the logged-in web app ------------------
@@ -99,9 +121,19 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
       mimeType: msg.mimeType,
       filename: msg.filename,
     })
-    setState({ recording: false })
+    // If no audio actually reached the recorder, warn the user rather than let
+    // them wait for an empty transcript. Usually means the meeting audio isn't
+    // coming out of the captured tab (e.g. a desktop Zoom/Teams app).
+    setState({
+      recording: false,
+      error: msg.silent
+        ? 'No audio was captured — is the meeting playing in this tab? Desktop apps (Zoom/Teams) can’t be recorded this way.'
+        : null,
+    })
+    setBadge(false)
   }
   if (msg.type === 'recording-error') {
     setState({ recording: false, error: msg.error })
+    setBadge(false)
   }
 })

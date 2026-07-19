@@ -37,12 +37,21 @@
       #status { font-size: 11px; color: #6b7280; text-align: center; margin-top: 10px; min-height: 14px; }
       .dot { display:inline-block; width:8px; height:8px; border-radius:50%; background:#dc2626; margin-right:6px; animation: pulse 1.2s infinite; }
       @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+      #meterWrap { display:none; margin: 2px 0 4px; }
+      #meterTrack { height: 8px; border-radius: 6px; background: #e5e7eb; overflow: hidden; }
+      #meterBar { height: 100%; width: 0%; border-radius: 6px; background: #10b981; transition: width .12s linear; }
+      #meterHint { font-size: 10px; color: #9ca3af; text-align: center; margin-top: 4px; }
+      @media (prefers-color-scheme: dark) { #meterTrack { background: #374151; } }
     </style>
   </head>
   <body>
     <h1>Meeting Recorder</h1>
     <p class="sub">Records this tab's audio + your mic.</p>
     <div id="timer">00:00</div>
+    <div id="meterWrap">
+      <div id="meterTrack"><div id="meterBar"></div></div>
+      <div id="meterHint">Listening for audio…</div>
+    </div>
     <button id="start">● Start recording</button>
     <button id="stop" style="display:none">■ Stop &amp; summarize</button>
     <div id="status"></div>

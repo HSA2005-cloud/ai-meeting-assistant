@@ -20,7 +20,9 @@ Schema:
   "decisions": ["decision made"]
 }
 
-If a category has nothing, return an empty array. Do not invent content not in the transcript."""
+If a category has nothing, return an empty array. Do not invent content not in the transcript.
+
+The transcript may be in any language. Always write the summary, key_points, action_items, and decisions in English, translating from the transcript's language as needed. Keep proper nouns (names, product names) as-is."""
 
 _LIST_KEYS = ("key_points", "action_items", "decisions")
 

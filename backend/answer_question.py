@@ -3,7 +3,7 @@ import os
 from google import genai
 from dotenv import load_dotenv
 
-from embed_and_store import _collection, _embedder
+from embed_and_store import _collection, embed_query
 
 load_dotenv()
 _client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
@@ -26,7 +26,7 @@ Transcript excerpts:"""
 
 
 def _retrieve(meeting_id: str, question: str) -> list[str]:
-    query_embedding = _embedder.encode([question]).tolist()
+    query_embedding = embed_query(question)
     result = _collection.query(
         query_embeddings=query_embedding,
         n_results=TOP_K,
